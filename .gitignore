@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.Python
+venv/
+env/
+ENV/
+
+# Archivos sensibles  
+.env
+users.json
+tasks.json
+tasks_auth.json
+
+# IDEs
+.vscode/
+.idea/

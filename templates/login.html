@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Recordatorios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            position: relative;
+            bottom: -2px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            background: #d1fae5;
+            color: #059669;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px 24px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">📋</div>
+            <h1>Recordatorios</h1>
+            <p class="subtitle">Gestiona tus tareas desde cualquier dispositivo</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="login">Iniciar Sesión</button>
+            <button class="tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+
+        <!-- Formulario de Login -->
+        <div id="login-form" class="form-container active">
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-username">Usuario</label>
+                    <input type="text" id="login-username" placeholder="Tu nombre de usuario" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Tu contraseña" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">🔓 Iniciar Sesión</button>
+            </form>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div id="register-form" class="form-container">
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="register-username">Usuario</label>
+                    <input type="text" id="register-username" placeholder="Elige un nombre de usuario" required autocomplete="username" minlength="3">
+                </div>
+                <div class="form-group">
+                    <label for="register-whatsapp">📱 WhatsApp</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="register-country" required style="flex: 0 0 100px; padding: 14px 12px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 24px; background: white; text-align: center;">
+                            <option value="" style="font-size: 14px;">País</option>
+                            <option value="+1">🇺🇸</option>
+                            <option value="+1">🇨🇦</option>
+                            <option value="+52">🇲🇽</option>
+                            <option value="+54">🇦🇷</option>
+                            <option value="+56">🇨🇱</option>
+                            <option value="+57">🇨🇴</option>
+                            <option value="+58">🇻🇪</option>
+                            <option value="+51">🇵🇪</option>
+                            <option value="+593">🇪🇨</option>
+                            <option value="+591">🇧🇴</option>
+                            <option value="+598">🇺🇾</option>
+                            <option value="+595">🇵🇾</option>
+                            <option value="+34">🇪🇸</option>
+                            <option value="+33">🇫🇷</option>
+                            <option value="+49">🇩🇪</option>
+                            <option value="+44">🇬🇧</option>
+                            <option value="+39">🇮🇹</option>
+                            <option value="+351">🇵🇹</option>
+                            <option value="+55">🇧🇷</option>
+                            <option value="+86">🇨🇳</option>
+                            <option value="+81">🇯🇵</option>
+                            <option value="+82">🇰🇷</option>
+                            <option value="+91">🇮🇳</option>
+                            <option value="+61">🇦🇺</option>
+                            <option value="+64">🇳🇿</option>
+                            <option value="+27">🇿🇦</option>
+                        </select>
+                        <input type="tel" id="register-whatsapp" placeholder="1234567890" required autocomplete="tel" pattern="[0-9]+" style="flex: 1; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Contraseña</label>
+                    <input type="password" id="register-password" placeholder="Mínimo 4 caracteres" required autocomplete="new-password" minlength="4">
+                </div>
+                <button type="submit" class="btn btn-primary">🎉 Crear Cuenta</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+                document.getElementById(`${tabName}-form`).classList.add('active');
+
+                hideError();
+                hideSuccess();
+            });
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.classList.add('show');
+        }
+
+        function hideSuccess() {
+            document.getElementById('success').classList.remove('show');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            hideError();
+
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showError(data.error || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                showError('Error de conexión. Intenta de nuevo.');
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            hideError();
+
+            const username = document.getElementById('register-username').value;
+            const countryCode = document.getElementById('register-country').value;
+            const phoneNumber = document.getElementById('register-whatsapp').value;
+            const password = document.getElementById('register-password').value;
+
+            // Validar que se haya seleccionado un país
+            if (!countryCode) {
+                showError('Por favor selecciona tu país');
+                return;
+            }
+
+            // Combinar código de país con número
+            const whatsapp = countryCode + phoneNumber;
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, whatsapp, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showError(data.error || 'Error al registrarse');
+                }
+            } catch (error) {
+                showError('Error de conexión. Intenta de nuevo.');
+            }
+        }
+    </script>
+</body>
+</html>

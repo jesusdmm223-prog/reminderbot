@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#6366f1">
+    <title>Recordatorios - Gestión de Tareas</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--gray-900);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .stat {
+            background: var(--gray-50);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #taskInput:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .tasks-section {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            bottom: -2px;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .task:hover {
+            background: white;
+            border-color: var(--gray-200);
+        }
+
+        .task.completed {
+            opacity: 0.6;
+        }
+
+        .task.completed .task-text {
+            text-decoration: line-through;
+            color: var(--gray-600);
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--gray-300);
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .task-checkbox:hover {
+            border-color: var(--primary);
+        }
+
+        .task-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+            color: var(--gray-900);
+        }
+
+        .task-id {
+            font-size: 12px;
+            color: var(--gray-600);
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .task-delete {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--danger);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .task-delete:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-600);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .notification {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+        }
+
+        /* PWA Install Prompt */
+        .install-prompt {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .install-prompt.show {
+            display: flex;
+        }
+
+        .install-prompt-text {
+            flex: 1;
+        }
+
+        .btn-install {
+            background: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="install-prompt" id="installPrompt">
+            <div class="install-prompt-text">
+                <strong>📱 Instalar aplicación</strong>
+                <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">
+                    Accede más rápido desde tu pantalla de inicio
+                </div>
+            </div>
+            <button class="btn-install" id="installBtn">Instalar</button>
+        </div>
+
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h1 style="margin: 0;">📋 Mis Tareas</h1>
+                <button onclick="logout()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🚪 Salir</button>
+            </div>
+            <p style="color: #6b7280; margin-bottom: 8px;">Gestiona tus recordatorios desde cualquier dispositivo</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="completedCount">0</div>
+                    <div class="stat-label">Completadas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="Escribe una nueva tarea..." />
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📅 Fecha (opcional)</label>
+                    <input type="date" id="taskDate" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">⏰ Hora (opcional)</label>
+                    <input type="time" id="taskTime" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="addBtn" style="margin-top: 12px; width: 100%;">➕ Agregar Tarea</button>
+        </div>
+
+        <div class="tasks-section">
+            <div class="tabs">
+                <button class="tab active" data-tab="pending">⏳ Pendientes</button>
+                <button class="tab" data-tab="all">📋 Todas</button>
+                <button class="tab" data-tab="completed">✅ Completadas</button>
+            </div>
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let tasks = [];
+        let currentTab = 'pending';
+        let deferredPrompt = null;
+
+        // PWA Install
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('show');
+            }
+        });
+
+        // Notification Web API
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body, icon: '/static/icon-192.png' });
+            }
+        }
+
+        // UI Functions
+        function showToast(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks');
+                const data = await response.json();
+                if (data.success) {
+                    tasks = data.tasks;
+                    renderTasks();
+                    updateStats();
+                }
+            } catch (error) {
+                showToast('Error al cargar tareas', 'error');
+            }
+        }
+
+        async function addTask() {
+            const input = document.getElementById('taskInput');
+            const dateInput = document.getElementById('taskDate');
+            const timeInput = document.getElementById('taskTime');
+            const description = input.value.trim();
+
+            if (!description) {
+                showToast('Escribe una tarea primero', 'error');
+                return;
+            }
+
+            const taskData = {
+                description: description,
+                due_date: dateInput.value || null,
+                due_time: timeInput.value || null
+            };
+
+            try {
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(taskData)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    input.value = '';
+                    dateInput.value = '';
+                    timeInput.value = '';
+                    showToast('¡Tarea agregada!');
+
+                    let notifText = description;
+                    if (taskData.due_date) {
+                        notifText += ` - ${taskData.due_date}`;
+                        if (taskData.due_time) notifText += ` ${taskData.due_time}`;
+                    }
+                    showNotification('Nueva tarea', notifText);
+                    loadTasks();
+                }
+            } catch (error) {
+                showToast('Error al agregar tarea', 'error');
+            }
+        }
+
+        async function completeTask(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/complete`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('¡Tarea completada! 🎉');
+                    loadTasks();
+                }
+            } catch (error) {
+                showToast('Error al completar tarea', 'error');
+            }
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm('¿Eliminar esta tarea?')) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Tarea eliminada');
+                    loadTasks();
+                }
+            } catch (error) {
+                showToast('Error al eliminar tarea', 'error');
+            }
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            let filteredTasks = tasks;
+
+            if (currentTab === 'pending') {
+                filteredTasks = tasks.filter(t => !t.completed);
+            } else if (currentTab === 'completed') {
+                filteredTasks = tasks.filter(t => t.completed);
+            }
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div>No hay tareas aquí</div>
+                    </div>
+                `;
+                return;
+            }
+
+            taskList.innerHTML = filteredTasks.map(task => {
+                const urgency = getUrgencyBadge(task);
+                const dateTimeInfo = getDateTimeInfo(task);
+                const reminderBadge = task.reminder_count > 0 ? `<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;">⏰ ${task.reminder_count} recordatorio(s)</span>` : '';
+
+                return `
+                <div class="task ${task.completed ? 'completed' : ''}">
+                    <div class="task-checkbox ${task.completed ? 'checked' : ''}"
+                         onclick="completeTask(${task.id})"
+                         style="${task.completed ? 'pointer-events: none;' : ''}">
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="task-text">${urgency}${escapeHtml(task.description)}${reminderBadge}</div>
+                        ${dateTimeInfo ? `<div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${dateTimeInfo}</div>` : ''}
+                    </div>
+                    <div class="task-id">#${task.id}</div>
+                    <button class="task-delete" onclick="deleteTask(${task.id})">🗑️</button>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const pending = tasks.filter(t => !t.completed).length;
+            const completed = tasks.filter(t => t.completed).length;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('completedCount').textContent = completed;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getUrgencyBadge(task) {
+            if (task.completed || !task.reminder_count) return '';
+
+            const count = task.reminder_count;
+            if (count > 5) {
+                return '<span style="background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 8px;">🔴 MUY URGENTE</span>';
+            } else if (count > 3) {
+                return '<span style="background: #fed7aa; color: #ea580c; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 8px;">🟠 URGENTE</span>';
+            } else if (count > 1) {
+                return '<span style="background: #fef3c7; color: #ca8a04; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 8px;">🟡 IMPORTANTE</span>';
+            }
+            return '';
+        }
+
+        function getDateTimeInfo(task) {
+            if (!task.due_date) return '';
+
+            const now = new Date();
+            const dueDate = new Date(task.due_date + 'T00:00:00');
+            let info = `📅 ${task.due_date}`;
+
+            if (task.due_time) {
+                info += ` ⏰ ${task.due_time}`;
+
+                const dueDateTime = new Date(task.due_date + 'T' + task.due_time);
+                if (now > dueDateTime && !task.completed) {
+                    const diffMs = now - dueDateTime;
+                    const diffHours = Math.floor(diffMs / 1000 / 60 / 60);
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffDays > 0) {
+                        info += ` <span style="color: #dc2626; font-weight: 600;">(vencida hace ${diffDays} día(s))</span>`;
+                    } else if (diffHours > 0) {
+                        info += ` <span style="color: #dc2626; font-weight: 600;">(vencida hace ${diffHours} hora(s))</span>`;
+                    } else {
+                        info += ` <span style="color: #dc2626; font-weight: 600;">(vencida)</span>`;
+                    }
+                }
+            } else if (now.toDateString() === dueDate.toDateString()) {
+                info += ' <span style="color: #ea580c; font-weight: 600;">(¡Hoy!)</span>';
+            } else if (now > dueDate && !task.completed) {
+                const diffDays = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+                info += ` <span style="color: #dc2626; font-weight: 600;">(vencida hace ${diffDays} día(s))</span>`;
+            }
+
+            return info;
+        }
+
+        // Event Listeners
+        document.getElementById('addBtn').addEventListener('click', addTask);
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                renderTasks();
+            });
+        });
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadTasks, 10000);
+
+        // Logout function
+        async function logout() {
+            if (!confirm('¿Cerrar sesión?')) return;
+
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                alert('Error al cerrar sesión');
+            }
+        }
+
+        // Initial load
+        loadTasks();
+        requestNotificationPermission();
+    </script>
+</body>
+</html>
