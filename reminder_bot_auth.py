@@ -438,17 +438,17 @@ def enviar_whatsapp(numero, mensaje):
 # ========== PROCESAMIENTO DE MENSAJES DE WHATSAPP ==========
 
 def procesar_con_ia(mensaje, tareas_usuario=[]):
-    """Usa Claude AI para interpretar el mensaje del usuario de forma natural"""
+    """Usa OpenAI para interpretar el mensaje del usuario de forma natural"""
     try:
-        import anthropic
+        from openai import OpenAI
         import json
         from datetime import datetime
 
-        api_key = os.getenv('ANTHROPIC_API_KEY')
+        api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
             return None
 
-        client = anthropic.Anthropic(api_key=api_key)
+        client = OpenAI(api_key=api_key)
 
         # Contexto de tareas existentes
         tareas_context = ""
@@ -483,13 +483,14 @@ Ejemplos:
 
 Responde SOLO el JSON, nada más."""
 
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}]
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500
         )
 
-        respuesta = message.content[0].text.strip()
+        respuesta = response.choices[0].message.content.strip()
         # Limpiar markdown si lo tiene
         if respuesta.startswith('```'):
             respuesta = respuesta.split('\n', 1)[1]
@@ -499,6 +500,8 @@ Responde SOLO el JSON, nada más."""
 
     except Exception as e:
         print(f"⚠️ Error en IA: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def extraer_hora_fecha(texto):
