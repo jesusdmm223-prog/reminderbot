@@ -437,6 +437,216 @@ def enviar_whatsapp(numero, mensaje):
         print(f"❌ Error al enviar WhatsApp a {numero}: {str(e)}")
         return False
 
+# ========== PROCESAMIENTO DE MENSAJES DE WHATSAPP ==========
+
+def extraer_hora_fecha(texto):
+    """Extrae hora y fecha de un texto usando expresiones regulares y dateparser"""
+    import re
+    from dateutil import parser as date_parser
+    import dateparser
+
+    # Patrones de hora comunes
+    patrones_hora = [
+        r'(\d{1,2}):(\d{2})\s*(am|pm)?',  # 3:00pm, 15:30
+        r'(\d{1,2})\s*(am|pm)',            # 3pm, 3 pm
+        r'a las (\d{1,2})',                # a las 3
+        r'(\d{1,2})h',                     # 15h
+    ]
+
+    hora_encontrada = None
+    fecha_encontrada = None
+
+    # Buscar hora en el texto
+    for patron in patrones_hora:
+        match = re.search(patron, texto.lower())
+        if match:
+            try:
+                hora_str = match.group(0)
+                # Intentar parsear la hora
+                fecha_hora = dateparser.parse(hora_str, settings={'PREFER_DATES_FROM': 'future'})
+                if fecha_hora:
+                    hora_encontrada = fecha_hora.strftime('%H:%M')
+                    fecha_encontrada = fecha_hora.strftime('%Y-%m-%d')
+                    break
+            except:
+                continue
+
+    # Si no encontró hora, intentar con dateparser en todo el texto
+    if not hora_encontrada:
+        try:
+            fecha_hora = dateparser.parse(texto, settings={'PREFER_DATES_FROM': 'future', 'PREFER_DAY_OF_MONTH': 'current'})
+            if fecha_hora:
+                hora_encontrada = fecha_hora.strftime('%H:%M')
+                fecha_encontrada = fecha_hora.strftime('%Y-%m-%d')
+        except:
+            pass
+
+    return fecha_encontrada, hora_encontrada
+
+def procesar_mensaje_whatsapp(numero_remitente, mensaje):
+    """Procesa mensajes entrantes de WhatsApp"""
+    # Limpiar número
+    numero_limpio = numero_remitente.replace('@s.whatsapp.net', '').replace('@c.us', '')
+
+    # Buscar usuario por número de WhatsApp
+    user = None
+    for u in user_manager.users:
+        user_number = u.get('whatsapp_number', '').replace('+', '').replace(' ', '').replace('-', '')
+        if numero_limpio in user_number or user_number in numero_limpio:
+            user = u
+            break
+
+    if not user:
+        return enviar_whatsapp(numero_remitente, "❌ No estás registrado en el sistema. Por favor regístrate primero en la aplicación web.")
+
+    mensaje_lower = mensaje.lower().strip()
+
+    # Comando: Ver lista de tareas
+    if mensaje_lower in ['lista', 'tareas', 'ver tareas', 'mis tareas']:
+        tareas = task_manager.get_pending_tasks(user['id'])
+
+        if not tareas:
+            return enviar_whatsapp(numero_remitente, "📋 No tienes tareas pendientes.")
+
+        respuesta = "📋 *Tus tareas pendientes:*\n\n"
+        for i, tarea in enumerate(tareas, 1):
+            respuesta += f"{i}. {tarea['description']}"
+            if tarea.get('due_date') and tarea.get('due_time'):
+                respuesta += f" - {tarea['due_time']}"
+            respuesta += "\n"
+
+        respuesta += f"\n📊 Total: {len(tareas)} tarea(s)"
+        respuesta += "\n\n💡 Para completar una tarea escribe: completar 1"
+
+        return enviar_whatsapp(numero_remitente, respuesta)
+
+    # Comando: Completar tarea
+    if mensaje_lower.startswith('completar') or mensaje_lower.startswith('✓'):
+        # Extraer número de tarea
+        import re
+        match = re.search(r'(\d+)', mensaje)
+        if not match:
+            return enviar_whatsapp(numero_remitente, "❌ Por favor especifica el número de tarea. Ejemplo: completar 1")
+
+        numero_tarea = int(match.group(1))
+        tareas_pendientes = task_manager.get_pending_tasks(user['id'])
+
+        if numero_tarea < 1 or numero_tarea > len(tareas_pendientes):
+            return enviar_whatsapp(numero_remitente, f"❌ Número de tarea inválido. Tienes {len(tareas_pendientes)} tareas pendientes.")
+
+        tarea = tareas_pendientes[numero_tarea - 1]
+        task_manager.complete_task(user['id'], tarea['id'])
+
+        return enviar_whatsapp(numero_remitente, f"✅ Tarea completada: {tarea['description']}")
+
+    # Comando: Ayuda
+    if mensaje_lower in ['ayuda', 'help', 'comandos', '?']:
+        respuesta = """🤖 *Comandos disponibles:*
+
+📝 Para crear una tarea:
+Escribe la tarea y termina con "listo"
+Ejemplo: Comprar pan a las 3pm listo
+
+📋 Ver tus tareas:
+Escribe: lista
+
+✅ Completar una tarea:
+Escribe: completar 1
+
+❓ Ver esta ayuda:
+Escribe: ayuda"""
+        return enviar_whatsapp(numero_remitente, respuesta)
+
+    # Crear tarea si termina con "listo"
+    if mensaje_lower.endswith('listo'):
+        # Quitar la palabra "listo" del mensaje
+        texto_tarea = mensaje[:-5].strip()
+
+        # Extraer fecha y hora
+        fecha, hora = extraer_hora_fecha(texto_tarea)
+
+        if not hora:
+            return enviar_whatsapp(numero_remitente, "❌ No pude detectar la hora. Por favor incluye una hora clara.\nEjemplo: Comprar pan a las 3pm listo")
+
+        # Crear la tarea sin la hora en la descripción
+        descripcion_limpia = texto_tarea
+        # Intentar limpiar la descripción eliminando patrones de hora
+        import re
+        descripcion_limpia = re.sub(r'\s*(a las|a la|al|en)\s*\d{1,2}(:\d{2})?\s*(am|pm|h)?\s*', ' ', descripcion_limpia, flags=re.IGNORECASE)
+        descripcion_limpia = re.sub(r'\d{1,2}:\d{2}', '', descripcion_limpia)
+        descripcion_limpia = descripcion_limpia.strip()
+
+        # Crear la tarea
+        task = task_manager.add_task(user['id'], descripcion_limpia, fecha, hora)
+
+        respuesta = f"✅ *Tarea creada:*\n\n"
+        respuesta += f"📝 {descripcion_limpia}\n"
+        respuesta += f"🕐 {hora}"
+        if fecha:
+            respuesta += f" - {fecha}"
+        respuesta += f"\n\n💡 Te recordaré a la hora indicada."
+
+        return enviar_whatsapp(numero_remitente, respuesta)
+
+    # Si no reconoce el comando
+    respuesta = """🤔 No entendí tu mensaje.
+
+💡 *Cómo usar el bot:*
+
+📝 Crear tarea:
+Comprar pan a las 3pm listo
+
+📋 Ver tareas:
+lista
+
+✅ Completar tarea:
+completar 1
+
+Escribe "ayuda" para más info."""
+    return enviar_whatsapp(numero_remitente, respuesta)
+
+@app.route('/webhook/whatsapp', methods=['POST'])
+def webhook_whatsapp():
+    """Webhook para recibir mensajes de WhatsApp desde Evolution API"""
+    try:
+        data = request.get_json()
+        print(f"\n📨 Webhook recibido: {data}")
+
+        # Verificar que sea un mensaje de texto
+        if data.get('event') != 'messages.upsert':
+            return jsonify({'success': True, 'message': 'Event ignored'}), 200
+
+        # Obtener datos del mensaje
+        message_data = data.get('data', {})
+        key = message_data.get('key', {})
+        message = message_data.get('message', {})
+
+        # Ignorar mensajes propios
+        if key.get('fromMe'):
+            return jsonify({'success': True, 'message': 'Own message ignored'}), 200
+
+        # Obtener número del remitente y texto del mensaje
+        numero_remitente = key.get('remoteJid', '')
+        texto_mensaje = message.get('conversation') or message.get('extendedTextMessage', {}).get('text', '')
+
+        if not texto_mensaje or not numero_remitente:
+            return jsonify({'success': True, 'message': 'No text or sender'}), 200
+
+        print(f"📱 Mensaje de {numero_remitente}: {texto_mensaje}")
+
+        # Procesar el mensaje en un thread separado para no bloquear el webhook
+        from threading import Thread
+        thread = Thread(target=procesar_mensaje_whatsapp, args=(numero_remitente, texto_mensaje))
+        thread.start()
+
+        return jsonify({'success': True, 'message': 'Processing'}), 200
+
+    except Exception as e:
+        print(f"❌ Error en webhook: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ========== SERVIDOR ==========
 
 def iniciar_servidor():
