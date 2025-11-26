@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Recordatorios</title>
+    <title>Bot de Recordatorios - WhatsApp</title>
     <style>
         * {
             margin: 0;
@@ -27,7 +27,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
         }
 
         .logo {
@@ -51,123 +51,85 @@
             text-align: center;
             color: #666;
             margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: none;
             font-size: 16px;
-            font-weight: 600;
-            color: #999;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            position: relative;
-            bottom: -2px;
-            transition: all 0.3s;
         }
 
-        .tab.active {
-            color: #6366f1;
-            border-bottom-color: #6366f1;
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
         }
 
-        .form-container {
-            display: none;
+        .info-box h2 {
+            color: #1e40af;
+            font-size: 20px;
+            margin-bottom: 12px;
         }
 
-        .form-container.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
+        .info-box p {
+            color: #1e3a8a;
+            line-height: 1.6;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .feature-list li {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 3px solid #6366f1;
+        }
+
+        .feature-list li strong {
+            color: #4f46e5;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .feature-list li p {
+            color: #6b7280;
             font-size: 14px;
+            line-height: 1.5;
         }
 
-        input {
+        .code-example {
+            background: #1f2937;
+            color: #10b981;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+
+        .whatsapp-button {
+            display: block;
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #6366f1;
-        }
-
-        select {
-            cursor: pointer;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .btn-primary {
-            background: #6366f1;
+            background: #25d366;
             color: white;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 24px;
+            transition: all 0.3s;
         }
 
-        .btn-primary:hover {
-            background: #4f46e5;
+        .whatsapp-button:hover {
+            background: #20ba5a;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .error {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        .success {
-            background: #d1fae5;
-            color: #059669;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .success.show {
-            display: block;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
         }
 
         @media (max-width: 640px) {
@@ -184,184 +146,57 @@
 <body>
     <div class="container">
         <div class="logo">
-            <div class="logo-icon">📋</div>
-            <h1>Recordatorios</h1>
-            <p class="subtitle">Gestiona tus tareas desde cualquier dispositivo</p>
+            <div class="logo-icon">📱</div>
+            <h1>Bot de Recordatorios</h1>
+            <p class="subtitle">Gestiona tus tareas directamente desde WhatsApp</p>
         </div>
 
-        <div class="tabs">
-            <button class="tab active" data-tab="login">Iniciar Sesión</button>
-            <button class="tab" data-tab="register">Registrarse</button>
+        <div class="info-box">
+            <h2>¿Cómo funciona?</h2>
+            <p>Este bot funciona 100% por WhatsApp. No necesitas registrarte en ninguna página web.</p>
+            <p><strong>Para comenzar:</strong> Envía cualquier mensaje por WhatsApp al bot.</p>
         </div>
 
-        <div id="error" class="error"></div>
-        <div id="success" class="success"></div>
+        <ul class="feature-list">
+            <li>
+                <strong>📝 Crear una tarea</strong>
+                <p>Escribe tu tarea y termina con "listo"</p>
+                <div class="code-example">Comprar pan a las 3pm listo</div>
+            </li>
 
-        <!-- Formulario de Login -->
-        <div id="login-form" class="form-container active">
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="login-username">Usuario</label>
-                    <input type="text" id="login-username" placeholder="Tu nombre de usuario" required autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Contraseña</label>
-                    <input type="password" id="login-password" placeholder="Tu contraseña" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn btn-primary">🔓 Iniciar Sesión</button>
-            </form>
+            <li>
+                <strong>📋 Ver tu lista de tareas</strong>
+                <p>Escribe el comando:</p>
+                <div class="code-example">lista</div>
+            </li>
+
+            <li>
+                <strong>✅ Completar una tarea</strong>
+                <p>Escribe el número de la tarea:</p>
+                <div class="code-example">completar 1</div>
+            </li>
+
+            <li>
+                <strong>⏰ Recordatorios automáticos</strong>
+                <p>El bot te enviará recordatorios cada 5 minutos hasta que completes la tarea.</p>
+            </li>
+
+            <li>
+                <strong>❓ Ver ayuda</strong>
+                <p>Escribe el comando:</p>
+                <div class="code-example">ayuda</div>
+            </li>
+        </ul>
+
+        <div class="info-box" style="background: #fef3c7; border-left-color: #f59e0b;">
+            <h2 style="color: #92400e;">💡 Primer uso</h2>
+            <p style="color: #78350f;">Si ya tienes una cuenta, el bot te pedirá que vincules tu WhatsApp escribiendo tu correo electrónico.</p>
+            <p style="color: #78350f;">Si no tienes cuenta, el bot te indicará cómo registrarte.</p>
         </div>
 
-        <!-- Formulario de Registro -->
-        <div id="register-form" class="form-container">
-            <form onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label for="register-username">Usuario</label>
-                    <input type="text" id="register-username" placeholder="Elige un nombre de usuario" required autocomplete="username" minlength="3">
-                </div>
-                <div class="form-group">
-                    <label for="register-whatsapp">📱 WhatsApp</label>
-                    <div style="display: flex; gap: 8px;">
-                        <select id="register-country" required style="flex: 0 0 100px; padding: 14px 12px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 24px; background: white; text-align: center;">
-                            <option value="" style="font-size: 14px;">País</option>
-                            <option value="+1">🇺🇸</option>
-                            <option value="+1">🇨🇦</option>
-                            <option value="+52">🇲🇽</option>
-                            <option value="+54">🇦🇷</option>
-                            <option value="+56">🇨🇱</option>
-                            <option value="+57">🇨🇴</option>
-                            <option value="+58">🇻🇪</option>
-                            <option value="+51">🇵🇪</option>
-                            <option value="+593">🇪🇨</option>
-                            <option value="+591">🇧🇴</option>
-                            <option value="+598">🇺🇾</option>
-                            <option value="+595">🇵🇾</option>
-                            <option value="+34">🇪🇸</option>
-                            <option value="+33">🇫🇷</option>
-                            <option value="+49">🇩🇪</option>
-                            <option value="+44">🇬🇧</option>
-                            <option value="+39">🇮🇹</option>
-                            <option value="+351">🇵🇹</option>
-                            <option value="+55">🇧🇷</option>
-                            <option value="+86">🇨🇳</option>
-                            <option value="+81">🇯🇵</option>
-                            <option value="+82">🇰🇷</option>
-                            <option value="+91">🇮🇳</option>
-                            <option value="+61">🇦🇺</option>
-                            <option value="+64">🇳🇿</option>
-                            <option value="+27">🇿🇦</option>
-                        </select>
-                        <input type="tel" id="register-whatsapp" placeholder="1234567890" required autocomplete="tel" pattern="[0-9]+" style="flex: 1; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px;">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="register-password">Contraseña</label>
-                    <input type="password" id="register-password" placeholder="Mínimo 4 caracteres" required autocomplete="new-password" minlength="4">
-                </div>
-                <button type="submit" class="btn btn-primary">🎉 Crear Cuenta</button>
-            </form>
-        </div>
+        <a href="https://wa.me/YOUR_WHATSAPP_NUMBER" class="whatsapp-button" target="_blank">
+            💬 Abrir WhatsApp
+        </a>
     </div>
-
-    <script>
-        // Tabs
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-
-                document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-                document.getElementById(`${tabName}-form`).classList.add('active');
-
-                hideError();
-                hideSuccess();
-            });
-        });
-
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
-        }
-
-        function hideError() {
-            document.getElementById('error').classList.remove('show');
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('success');
-            successDiv.textContent = message;
-            successDiv.classList.add('show');
-        }
-
-        function hideSuccess() {
-            document.getElementById('success').classList.remove('show');
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            hideError();
-
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    window.location.href = '/';
-                } else {
-                    showError(data.error || 'Error al iniciar sesión');
-                }
-            } catch (error) {
-                showError('Error de conexión. Intenta de nuevo.');
-            }
-        }
-
-        async function handleRegister(e) {
-            e.preventDefault();
-            hideError();
-
-            const username = document.getElementById('register-username').value;
-            const countryCode = document.getElementById('register-country').value;
-            const phoneNumber = document.getElementById('register-whatsapp').value;
-            const password = document.getElementById('register-password').value;
-
-            // Validar que se haya seleccionado un país
-            if (!countryCode) {
-                showError('Por favor selecciona tu país');
-                return;
-            }
-
-            // Combinar código de país con número
-            const whatsapp = countryCode + phoneNumber;
-
-            try {
-                const response = await fetch('/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, whatsapp, password })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    window.location.href = '/';
-                } else {
-                    showError(data.error || 'Error al registrarse');
-                }
-            } catch (error) {
-                showError('Error de conexión. Intenta de nuevo.');
-            }
-        }
-    </script>
 </body>
 </html>

@@ -175,9 +175,7 @@ def login_required(f):
 
 @app.route('/')
 def index():
-    """Página principal - redirige según estado de sesión"""
-    if 'user_id' in session:
-        return render_template('app.html')
+    """Página principal - landing page de WhatsApp"""
     return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
