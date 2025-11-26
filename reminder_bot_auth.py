@@ -383,27 +383,56 @@ def enviar_recordatorios():
             mensaje_whatsapp += f"📊 Total: {len(tasks_to_remind)} tarea(s) pendiente(s)\n\n"
             mensaje_whatsapp += "💡 Completa las tareas en la app para dejar de recibir recordatorios."
 
-            # Enviar por WhatsApp si está configurado
-            if client and user.get('whatsapp_number'):
+            # Enviar por WhatsApp
+            if user.get('whatsapp_number'):
                 enviar_whatsapp(user['whatsapp_number'], mensaje_whatsapp)
 
 def enviar_whatsapp(numero, mensaje):
-    """Envía un mensaje por WhatsApp usando Twilio"""
-    if not client:
-        print("⚠️  Twilio no configurado")
+    """Envía un mensaje por WhatsApp usando Evolution API"""
+    import requests
+
+    # Configuración Evolution API
+    EVOLUTION_API_URL = os.getenv('EVOLUTION_API_URL', 'https://devevoapi.tuagenteia.click')
+    EVOLUTION_API_KEY = os.getenv('EVOLUTION_API_KEY', 'e50bdaf76404943a4e2d13d7ff7a49a2')
+    EVOLUTION_INSTANCE = os.getenv('EVOLUTION_INSTANCE', 'reminderbot')
+
+    if not EVOLUTION_API_URL or not EVOLUTION_API_KEY:
+        print("⚠️  Evolution API no configurado")
         return False
 
     try:
-        # Formatear número con prefijo whatsapp:
-        whatsapp_to = f"whatsapp:{numero}" if not numero.startswith('whatsapp:') else numero
+        # Limpiar número (quitar + y espacios)
+        numero_limpio = numero.replace('+', '').replace(' ', '').replace('-', '')
 
-        message = client.messages.create(
-            from_=TWILIO_WHATSAPP_NUMBER,
-            body=mensaje,
-            to=whatsapp_to
-        )
-        print(f"✅ WhatsApp enviado a {numero}: {message.sid}")
-        return True
+        # Agregar @s.whatsapp.net si no lo tiene
+        if '@' not in numero_limpio:
+            numero_limpio = f"{numero_limpio}@s.whatsapp.net"
+
+        # Preparar el payload
+        payload = {
+            "number": numero_limpio,
+            "text": mensaje
+        }
+
+        # Headers con API key
+        headers = {
+            'Content-Type': 'application/json',
+            'apikey': EVOLUTION_API_KEY
+        }
+
+        # URL del endpoint
+        url = f"{EVOLUTION_API_URL}/message/sendText/{EVOLUTION_INSTANCE}"
+
+        # Enviar mensaje
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+
+        if response.status_code == 201 or response.status_code == 200:
+            print(f"✅ WhatsApp enviado a {numero}: {response.json().get('key', {}).get('id', 'OK')}")
+            return True
+        else:
+            print(f"❌ Error al enviar WhatsApp a {numero}: {response.status_code} - {response.text}")
+            return False
+
     except Exception as e:
         print(f"❌ Error al enviar WhatsApp a {numero}: {str(e)}")
         return False
