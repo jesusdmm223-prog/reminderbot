@@ -494,34 +494,42 @@ def procesar_mensaje_whatsapp(numero_remitente, mensaje):
             user = u
             break
 
-    # Si no existe, buscar si está intentando vincular con correo
+    # Si no existe el usuario, crear uno automáticamente
     if not user:
-        mensaje_lower = mensaje.lower().strip()
+        # Crear usuario automáticamente con el número de WhatsApp
+        user, error = user_manager.register(
+            username=numero_limpio,
+            password=secrets.token_hex(16),  # Password aleatorio
+            whatsapp_number=numero_limpio
+        )
 
-        # Verificar si es un correo electrónico
-        if '@' in mensaje and '.' in mensaje:
-            # Buscar usuario por correo
-            user_found = user_manager.get_user(mensaje.strip())
-            if user_found:
-                # Actualizar el número de WhatsApp del usuario
-                user_found['whatsapp_number'] = numero_limpio
-                user_manager.save_users()
-                return enviar_whatsapp(numero_remitente, f"✅ ¡Perfecto! Tu cuenta {mensaje.strip()} está vinculada.\n\nYa puedes usar el bot. Escribe:\n\n📝 Comprar pan a las 3pm listo\n📋 lista\n❓ ayuda")
-            else:
-                return enviar_whatsapp(numero_remitente, f"❌ No encontré una cuenta con ese correo.\n\nPor favor verifica tu correo o regístrate en:\nhttps://reminderbot-qsvy.onrender.com")
+        if error:
+            # Si ya existe (no debería pasar), buscar por número
+            for u in user_manager.users:
+                if u.get('username') == numero_limpio:
+                    user = u
+                    break
 
-        # Si no es un correo, mostrar mensaje de bienvenida
-        return enviar_whatsapp(numero_remitente, """👋 ¡Bienvenido al bot de recordatorios!
+        # Enviar mensaje de bienvenida
+        enviar_whatsapp(numero_remitente, """👋 ¡Bienvenido al bot de recordatorios!
 
-Para empezar, necesito vincular tu número de WhatsApp.
+Tu cuenta ha sido creada automáticamente.
 
-✅ Si ya tienes cuenta:
-Escribe tu correo electrónico
+💡 *Cómo usar el bot:*
 
-📝 Si no tienes cuenta:
-Regístrate en: https://reminderbot-qsvy.onrender.com
+📝 Crear tarea:
+Comprar pan a las 3pm listo
 
-Ejemplo: jesusdmm223@gmail.com""")
+📋 Ver tareas:
+lista
+
+✅ Completar tarea:
+completar 1
+
+Escribe "ayuda" para más comandos.""")
+
+        # Continuar procesando el mensaje
+        pass
 
     mensaje_lower = mensaje.lower().strip()
 
