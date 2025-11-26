@@ -437,6 +437,70 @@ def enviar_whatsapp(numero, mensaje):
 
 # ========== PROCESAMIENTO DE MENSAJES DE WHATSAPP ==========
 
+def procesar_con_ia(mensaje, tareas_usuario=[]):
+    """Usa Claude AI para interpretar el mensaje del usuario de forma natural"""
+    try:
+        import anthropic
+        import json
+        from datetime import datetime
+
+        api_key = os.getenv('ANTHROPIC_API_KEY')
+        if not api_key:
+            return None
+
+        client = anthropic.Anthropic(api_key=api_key)
+
+        # Contexto de tareas existentes
+        tareas_context = ""
+        if tareas_usuario:
+            tareas_context = "\n\nTareas actuales del usuario:\n"
+            for i, t in enumerate(tareas_usuario, 1):
+                tareas_context += f"{i}. {t['description']}"
+                if t.get('due_time'):
+                    tareas_context += f" - {t['due_time']}"
+                tareas_context += "\n"
+
+        prompt = f"""Eres un asistente de recordatorios por WhatsApp. Analiza el siguiente mensaje del usuario y extrae la información.
+
+Mensaje: "{mensaje}"
+Hora actual: {datetime.now().strftime('%Y-%m-%d %H:%M')}{tareas_context}
+
+Responde SOLO con un JSON con este formato:
+{{
+  "accion": "crear_tarea" | "ver_lista" | "completar_tarea" | "ayuda" | "desconocido",
+  "descripcion": "descripción de la tarea (sin la hora)",
+  "fecha": "YYYY-MM-DD o null",
+  "hora": "HH:MM o null",
+  "numero_tarea": número o null
+}}
+
+Ejemplos:
+- "Comprar pan a las 8:17" -> {{"accion": "crear_tarea", "descripcion": "Comprar pan", "fecha": "2025-11-26", "hora": "20:17", "numero_tarea": null}}
+- "llamar al doctor mañana 3pm" -> {{"accion": "crear_tarea", "descripcion": "llamar al doctor", "fecha": "2025-11-27", "hora": "15:00", "numero_tarea": null}}
+- "lista" -> {{"accion": "ver_lista", "descripcion": null, "fecha": null, "hora": null, "numero_tarea": null}}
+- "completar 1" -> {{"accion": "completar_tarea", "descripcion": null, "fecha": null, "hora": null, "numero_tarea": 1}}
+- "ayuda" -> {{"accion": "ayuda", "descripcion": null, "fecha": null, "hora": null, "numero_tarea": null}}
+
+Responde SOLO el JSON, nada más."""
+
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        respuesta = message.content[0].text.strip()
+        # Limpiar markdown si lo tiene
+        if respuesta.startswith('```'):
+            respuesta = respuesta.split('\n', 1)[1]
+            respuesta = respuesta.rsplit('\n```', 1)[0]
+
+        return json.loads(respuesta)
+
+    except Exception as e:
+        print(f"⚠️ Error en IA: {str(e)}")
+        return None
+
 def extraer_hora_fecha(texto):
     """Extrae hora y fecha de un texto usando expresiones regulares y dateparser"""
     import re
@@ -531,6 +595,74 @@ Escribe "ayuda" para más comandos.""")
         # Continuar procesando el mensaje
         pass
 
+    # ===== INTENTAR PROCESAR CON IA PRIMERO =====
+    tareas_usuario = task_manager.get_pending_tasks(user['id'])
+    ia_response = procesar_con_ia(mensaje, tareas_usuario)
+
+    if ia_response:
+        print(f"🤖 IA procesó: {ia_response}")
+
+        # Crear tarea
+        if ia_response['accion'] == 'crear_tarea' and ia_response['descripcion']:
+            if not ia_response['hora']:
+                return enviar_whatsapp(numero_remitente, "❌ No pude detectar la hora. Por favor incluye una hora clara.\nEjemplo: Comprar pan a las 3pm")
+
+            task = task_manager.add_task(user['id'], ia_response['descripcion'], ia_response['fecha'], ia_response['hora'])
+
+            respuesta = f"✅ *Tarea creada:*\n\n"
+            respuesta += f"📝 {ia_response['descripcion']}\n"
+            respuesta += f"🕐 {ia_response['hora']}"
+            if ia_response['fecha']:
+                respuesta += f" - {ia_response['fecha']}"
+            respuesta += f"\n\n💡 Te recordaré a la hora indicada."
+
+            return enviar_whatsapp(numero_remitente, respuesta)
+
+        # Ver lista
+        elif ia_response['accion'] == 'ver_lista':
+            if not tareas_usuario:
+                return enviar_whatsapp(numero_remitente, "📋 No tienes tareas pendientes.")
+
+            respuesta = "📋 *Tus tareas pendientes:*\n\n"
+            for i, tarea in enumerate(tareas_usuario, 1):
+                respuesta += f"{i}. {tarea['description']}"
+                if tarea.get('due_date') and tarea.get('due_time'):
+                    respuesta += f" - {tarea['due_time']}"
+                respuesta += "\n"
+
+            respuesta += f"\n📊 Total: {len(tareas_usuario)} tarea(s)"
+            respuesta += "\n\n💡 Para completar una tarea escribe: completar 1"
+
+            return enviar_whatsapp(numero_remitente, respuesta)
+
+        # Completar tarea
+        elif ia_response['accion'] == 'completar_tarea' and ia_response['numero_tarea']:
+            numero_tarea = ia_response['numero_tarea']
+
+            if numero_tarea < 1 or numero_tarea > len(tareas_usuario):
+                return enviar_whatsapp(numero_remitente, f"❌ Número de tarea inválido. Tienes {len(tareas_usuario)} tareas pendientes.")
+
+            tarea = tareas_usuario[numero_tarea - 1]
+            task_manager.complete_task(user['id'], tarea['id'])
+
+            return enviar_whatsapp(numero_remitente, f"✅ Tarea completada: {tarea['description']}")
+
+        # Ayuda
+        elif ia_response['accion'] == 'ayuda':
+            respuesta = """🤖 *Cómo usar el bot:*
+
+📝 Crear tarea:
+Simplemente escribe lo que quieres hacer y la hora
+Ejemplo: Comprar pan a las 3pm
+
+📋 Ver tareas:
+Escribe: lista
+
+✅ Completar tarea:
+Escribe: completar 1"""
+            return enviar_whatsapp(numero_remitente, respuesta)
+
+    # ===== SI IA NO FUNCIONÓ, USAR COMANDOS CLÁSICOS =====
     mensaje_lower = mensaje.lower().strip()
 
     # Comando: Ver lista de tareas
