@@ -488,16 +488,31 @@ def procesar_mensaje_whatsapp(numero_remitente, mensaje):
     # Limpiar número
     numero_limpio = numero_remitente.replace('@s.whatsapp.net', '').replace('@c.us', '')
 
+    # Extraer solo los últimos 10 dígitos del número
+    numeros_remitente = ''.join(filter(str.isdigit, numero_limpio))[-10:]
+
     # Buscar usuario por número de WhatsApp
     user = None
     for u in user_manager.users:
         user_number = u.get('whatsapp_number', '').replace('+', '').replace(' ', '').replace('-', '')
-        if numero_limpio in user_number or user_number in numero_limpio:
+        # Extraer últimos 10 dígitos del número del usuario
+        numeros_usuario = ''.join(filter(str.isdigit, user_number))[-10:]
+
+        # Comparar los últimos 10 dígitos
+        if numeros_remitente == numeros_usuario:
             user = u
             break
 
     if not user:
-        return enviar_whatsapp(numero_remitente, "❌ No estás registrado en el sistema. Por favor regístrate primero en la aplicación web.")
+        # Si no encontró usuario, intentar buscar por cualquier coincidencia parcial
+        for u in user_manager.users:
+            user_number = u.get('whatsapp_number', '').replace('+', '').replace(' ', '').replace('-', '')
+            if numero_limpio in user_number or user_number in numero_limpio:
+                user = u
+                break
+
+    if not user:
+        return enviar_whatsapp(numero_remitente, f"❌ No estás registrado. Regístrate en: https://reminderbot-qsvy.onrender.com\n\nTu número: {numero_remitente}")
 
     mensaje_lower = mensaje.lower().strip()
 
