@@ -488,7 +488,7 @@ def procesar_mensaje_whatsapp(numero_remitente, mensaje):
     # Limpiar número
     numero_limpio = numero_remitente.replace('@s.whatsapp.net', '').replace('@c.us', '')
 
-    # Buscar o crear usuario automáticamente
+    # Buscar usuario por número de WhatsApp
     user = None
     for u in user_manager.users:
         user_number = u.get('whatsapp_number', '').replace('+', '').replace(' ', '').replace('-', '')
@@ -496,19 +496,34 @@ def procesar_mensaje_whatsapp(numero_remitente, mensaje):
             user = u
             break
 
-    # Si no existe, crear usuario automáticamente
+    # Si no existe, buscar si está intentando vincular con correo
     if not user:
-        # Crear usuario con el número de WhatsApp
-        user, error = user_manager.register(
-            username=numero_limpio,
-            password=secrets.token_hex(16),  # Password aleatorio
-            whatsapp_number=numero_limpio
-        )
-        if user:
-            print(f"✅ Usuario auto-creado: {numero_limpio}")
-        else:
-            print(f"❌ Error creando usuario: {error}")
-            return
+        mensaje_lower = mensaje.lower().strip()
+
+        # Verificar si es un correo electrónico
+        if '@' in mensaje and '.' in mensaje:
+            # Buscar usuario por correo
+            user_found = user_manager.get_user(mensaje.strip())
+            if user_found:
+                # Actualizar el número de WhatsApp del usuario
+                user_found['whatsapp_number'] = numero_limpio
+                user_manager.save_users()
+                return enviar_whatsapp(numero_remitente, f"✅ ¡Perfecto! Tu cuenta {mensaje.strip()} está vinculada.\n\nYa puedes usar el bot. Escribe:\n\n📝 Comprar pan a las 3pm listo\n📋 lista\n❓ ayuda")
+            else:
+                return enviar_whatsapp(numero_remitente, f"❌ No encontré una cuenta con ese correo.\n\nPor favor verifica tu correo o regístrate en:\nhttps://reminderbot-qsvy.onrender.com")
+
+        # Si no es un correo, mostrar mensaje de bienvenida
+        return enviar_whatsapp(numero_remitente, """👋 ¡Bienvenido al bot de recordatorios!
+
+Para empezar, necesito vincular tu número de WhatsApp.
+
+✅ Si ya tienes cuenta:
+Escribe tu correo electrónico
+
+📝 Si no tienes cuenta:
+Regístrate en: https://reminderbot-qsvy.onrender.com
+
+Ejemplo: jesusdmm223@gmail.com""")
 
     mensaje_lower = mensaje.lower().strip()
 
