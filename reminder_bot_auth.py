@@ -446,6 +446,8 @@ def procesar_con_ia(mensaje, tareas_usuario=[]):
 
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
+            print("❌ ERROR CRÍTICO: OPENAI_API_KEY no encontrada en variables de entorno")
+            print(f"📋 Variables disponibles: {', '.join(sorted(os.environ.keys()))}")
             return None
 
         client = OpenAI(api_key=api_key)
@@ -813,6 +815,25 @@ def webhook_whatsapp():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/health/openai', methods=['GET'])
+def health_openai():
+    """Endpoint de diagnóstico para verificar configuración de OpenAI"""
+    api_key = os.getenv('OPENAI_API_KEY')
+    has_key = bool(api_key)
+
+    try:
+        from openai import OpenAI
+        has_lib = True
+    except ImportError:
+        has_lib = False
+
+    return jsonify({
+        'openai_key_configured': has_key,
+        'openai_library_installed': has_lib,
+        'key_preview': api_key[:20] + '...' if api_key else None,
+        'status': 'OK' if (has_key and has_lib) else 'ERROR'
+    })
 
 # ========== SERVIDOR ==========
 
