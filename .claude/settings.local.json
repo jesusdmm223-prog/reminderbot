@@ -8,7 +8,8 @@
       "Bash(ssh contabo \"docker service ls | grep -i whatsapp\")",
       "Bash(ssh:*)",
       "Bash(start \"\" \"c:\\Users\\david\\OneDrive\\Documentos\\proyectos ia\\REMINDERBOT\\qr-whatsapp.html\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
